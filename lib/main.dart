@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:secure_application/secure_application.dart';
+import 'package:flutter/widgets.dart';
 
 void main() {
   runApp(const MyApp());
@@ -52,11 +53,17 @@ class _SecureApplicationPageState extends State<SecureApplicationPage> {
   @override
   void initState() {
     super.initState();
-    secureApplicationController.secure();
+    // The secure() method requires a context parameter, but we can't use it in initState
+    // We'll call it later in the build method
   }
 
   @override
   Widget build(BuildContext context) {
+    // Call secure with context here
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      secureApplicationController.secure(context);
+    });
+    
     return SecureApplication(
       secureApplicationController: secureApplicationController,
       autoUnlockNative: true,
