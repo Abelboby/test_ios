@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:secure_application/secure_application.dart';
+import 'package:screen_protector/screen_protector.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,47 +33,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SecureApplicationPage(),
-    );
-  }
-}
-
-class SecureApplicationPage extends StatefulWidget {
-  const SecureApplicationPage({super.key});
-
-  @override
-  State<SecureApplicationPage> createState() => _SecureApplicationPageState();
-}
-
-class _SecureApplicationPageState extends State<SecureApplicationPage> {
-  final secureApplicationController = SecureApplicationController();
-
-  @override
-  Widget build(BuildContext context) {
-    return SecureApplication(
-      secureApplicationController: secureApplicationController,
-      autoUnlockNative: true,
-      nativeRemoveDelay: 800,
-      onNeedUnlock: (secureApplicationController) async {
-        // Handle unlock if needed
-        return null;
-      },
-      child: SecureGate(
-        blurr: 30,
-        opacity: 0.2,
-        lockedBuilder: (context, secureNotifier) => const Material(
-          child: Center(
-            child: Text('App content hidden'),
-          ),
-        ),
-        child: Builder(
-          builder: (context) {
-            // Securing the application when the UI is built
-            SecureApplicationProvider.of(context)?.secure();
-            return const MyHomePage(title: 'Flutter Demo Home Page');
-          },
-        ),
-      ),
+      home: const MyHomePage(title: 'Secure iOS App Demo'),
     );
   }
 }
@@ -98,14 +58,51 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  bool _isSecured = false;
+  String _securityStatus = "Screen protection initializing...";
+
+  @override
+  void initState() {
+    super.initState();
+    _enableScreenProtection();
+    _detectScreenshots();
+  }
+
+  // Enable screenshot protection
+  Future<void> _enableScreenProtection() async {
+    try {
+      await ScreenProtector.preventScreenshotOn(); // Enable screenshot prevention
+      setState(() {
+        _isSecured = true;
+        _securityStatus = "Screenshot & recording protection enabled";
+      });
+    } catch (e) {
+      setState(() {
+        _securityStatus = "Failed to enable protection: $e";
+      });
+    }
+  }
+
+  // Detect screenshot attempts
+  void _detectScreenshots() {
+    ScreenProtector.setOnScreenshotTakenListener(() {
+      setState(() {
+        _securityStatus = "⚠️ SCREENSHOT DETECTED! ⚠️";
+      });
+      
+      // Reset status message after 3 seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            _securityStatus = "Screenshot & recording protection enabled";
+          });
+        }
+      });
+    });
+  }
 
   void _incrementCounter() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
       _counter++;
     });
   }
@@ -147,12 +144,53 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: _isSecured ? Colors.green.shade100 : Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _isSecured ? Colors.green : Colors.amber,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isSecured ? Icons.security : Icons.warning,
+                    color: _isSecured ? Colors.green : Colors.amber,
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      _securityStatus,
+                      style: TextStyle(
+                        color: _isSecured ? Colors.green.shade800 : Colors.amber.shade800,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'This content is protected:',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 10),
             const Text(
               'You have pushed the button this many times:',
             ),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              '⚠️ Try taking a screenshot to see the detection in action',
+              style: TextStyle(fontStyle: FontStyle.italic),
             ),
           ],
         ),
@@ -163,5 +201,12 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  @override
+  void dispose() {
+    // Ensure we clean up resources
+    ScreenProtector.preventScreenshotOff();
+    super.dispose();
   }
 }
