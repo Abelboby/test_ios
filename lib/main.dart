@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:screen_protector/screen_protector.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize the screen protector
+  await ScreenProtector.protectDataLeakageOn();
+  
   runApp(const MyApp());
 }
 
@@ -85,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Detect screenshot attempts
   void _detectScreenshots() {
-    ScreenProtector.setOnScreenshotTakenListener(() {
+    ScreenProtector.addListener(() {
       setState(() {
         _securityStatus = "⚠️ SCREENSHOT DETECTED! ⚠️";
       });
@@ -207,6 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     // Ensure we clean up resources
     ScreenProtector.preventScreenshotOff();
+    ScreenProtector.removeListener();
     super.dispose();
   }
 }
