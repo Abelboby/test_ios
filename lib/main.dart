@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:secure_application/secure_application.dart';
-import 'package:flutter/widgets.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,26 +47,17 @@ class SecureApplicationPage extends StatefulWidget {
 
 class _SecureApplicationPageState extends State<SecureApplicationPage> {
   final secureApplicationController = SecureApplicationController();
-  bool _secureApplicationEnabled = true;
-
-  @override
-  void initState() {
-    super.initState();
-    // The secure() method requires a context parameter, but we can't use it in initState
-    // We'll call it later in the build method
-  }
 
   @override
   Widget build(BuildContext context) {
-    // Call secure with context here
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      secureApplicationController.secure(context);
-    });
-    
     return SecureApplication(
       secureApplicationController: secureApplicationController,
       autoUnlockNative: true,
       nativeRemoveDelay: 800,
+      onNeedUnlock: (secureApplicationController) async {
+        // Handle unlock if needed
+        return null;
+      },
       child: SecureGate(
         blurr: 30,
         opacity: 0.2,
@@ -76,7 +66,13 @@ class _SecureApplicationPageState extends State<SecureApplicationPage> {
             child: Text('App content hidden'),
           ),
         ),
-        child: const MyHomePage(title: 'Flutter Demo Home Page'),
+        child: Builder(
+          builder: (context) {
+            // Securing the application when the UI is built
+            SecureApplicationProvider.of(context)?.secure();
+            return const MyHomePage(title: 'Flutter Demo Home Page');
+          },
+        ),
       ),
     );
   }
