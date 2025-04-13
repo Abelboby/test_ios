@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:secure_application/secure_application.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,7 +33,44 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const SecureApplicationPage(),
+    );
+  }
+}
+
+class SecureApplicationPage extends StatefulWidget {
+  const SecureApplicationPage({super.key});
+
+  @override
+  State<SecureApplicationPage> createState() => _SecureApplicationPageState();
+}
+
+class _SecureApplicationPageState extends State<SecureApplicationPage> {
+  final secureApplicationController = SecureApplicationController();
+  bool _secureApplicationEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    secureApplicationController.secure();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SecureApplication(
+      secureApplicationController: secureApplicationController,
+      autoUnlockNative: true,
+      nativeRemoveDelay: 800,
+      child: SecureGate(
+        blurr: 30,
+        opacity: 0.2,
+        lockedBuilder: (context, secureNotifier) => const Material(
+          child: Center(
+            child: Text('App content hidden'),
+          ),
+        ),
+        child: const MyHomePage(title: 'Flutter Demo Home Page'),
+      ),
     );
   }
 }
