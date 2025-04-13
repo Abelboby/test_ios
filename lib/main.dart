@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:screen_protector/screen_protector.dart';
+import 'package:screen_protector/models/screen_protector_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -90,9 +91,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Detect screenshot attempts
   void _detectScreenshots() {
-    ScreenProtector.addListener(() {
+    // Listen for screenshot events
+    ScreenProtector.addListener(ScreenProtectorEvent.onScreenshot, () {
       setState(() {
         _securityStatus = "⚠️ SCREENSHOT DETECTED! ⚠️";
+      });
+      
+      // Reset status message after 3 seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            _securityStatus = "Screenshot & recording protection enabled";
+          });
+        }
+      });
+    });
+
+    // Listen for screen recording events
+    ScreenProtector.addListener(ScreenProtectorEvent.onScreenRecord, () {
+      setState(() {
+        _securityStatus = "⚠️ SCREEN RECORDING DETECTED! ⚠️";
       });
       
       // Reset status message after 3 seconds
@@ -212,7 +230,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     // Ensure we clean up resources
     ScreenProtector.preventScreenshotOff();
-    ScreenProtector.removeListener();
+    // Remove both event listeners
+    ScreenProtector.removeListener(ScreenProtectorEvent.onScreenshot);
+    ScreenProtector.removeListener(ScreenProtectorEvent.onScreenRecord);
     super.dispose();
   }
 }
